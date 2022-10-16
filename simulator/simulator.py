@@ -107,11 +107,11 @@ def factory_trial(*args, **kwargs):
     return n
 
 
-def multiple_trials(trial_count: int, n: int, p0: float, s0: int, tr: int, beta: float, seed: int):
+def multiple_trials(trial_count: int, n: int, p0: float, s0: int, tr: int, beta: float, seed: int, parallel: bool = True, parallel_threshold: int = 10000):
     rng = random.Random(seed)
     seeds = [rng.randint(0, INF) for _ in range(trial_count)]
 
-    if trial_count < 100000:
+    if not parallel or trial_count < parallel_threshold:
         results = [factory_trial(n, p0, s0, tr, beta, seed=seeds[i])
                    for i in range(trial_count)]
     else:

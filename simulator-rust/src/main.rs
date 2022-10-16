@@ -70,7 +70,7 @@ impl SimulationState {
             simulation_state.machines.push(MachineState {
                 // id: i + configs.n,
                 repair_end: 0,
-                run_begin: 1,
+                run_begin: 0,
             });
 
             simulation_state
