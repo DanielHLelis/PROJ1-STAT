@@ -1,0 +1,88 @@
+#version 450
+
+#define BATCH_SIZE 32
+#define PRATICAL_BATCH_SIZE 32
+
+layout(local_size_x = PRATICAL_BATCH_SIZE, local_size_y = 1, local_size_z = 1) in;
+
+// INPUT BUFFER
+layout(set = 0, binding = 0) buffer Data {
+    vec4 data[];
+} buf;
+
+// UNIFORMS (CONSTANTS)
+layout(binding = 1) uniform UniformBufferObject {
+    vec4 data;
+} batch;
+
+
+// NOISE FUNCTION
+// Source: <https://www.geeks3d.com/20100831/shader-library-noise-and-pseudo-random-number-generator-in-glsl/>
+// Gold Noise ©2015 dcerisano@standard3d.com
+float PHI = 1.61803398874989484820459;  // Golden Ratio   
+
+float gold_noise(in vec2 xy, in float seed){
+    return fract(tan(distance(xy*PHI, xy)*seed)*xy.x);
+}
+
+// CONSTANTS
+#define META        0
+#define WORKING     1
+#define AVAILABLE   2
+#define BROKEN      3
+
+// MACROS
+#define simulation buf
+#define current_n data[idx % BATCH_SIZE][1]
+#define broken_n data[idx % BATCH_SIZE][2]
+
+#define N       data[0]
+#define P0      data[1]
+#define TR      data[2]
+#define BETA    data[3]
+
+#define machine buf
+#define state   data[idx][0]
+#define p       data[idx][1]
+#define rng     data[idx][2]
+#define tr      data[idx][3]
+
+
+void main() {
+    // REGISTRANDO O INDEX DA INVOCAÇÃO
+    uint idx = gl_GlobalInvocationID.x;
+    vec2 xy = {1.0, 1.0};
+
+    uint machine_int_state = uint(machine.state);
+    
+    switch (machine_int_state) {
+        case WORKING:
+            machine.rng = gold_noise(xy, machine.rng);
+            if (machine.p > machine.rng) {
+                machine.state = BROKEN;
+                machine.tr = batch.TR;
+                simulation.current_n--;
+                simulation.broken_n++;
+            } else {
+                machine.p = machine.p + batch.BETA;
+            }
+            break;
+        
+        case BROKEN:
+            machine.tr -= 1.0;
+            if (0.0 >= machine.tr) {
+                machine.state = AVAILABLE;
+                simulation.broken_n--;
+            }
+            break;
+        
+        case AVAILABLE:
+            if (simulation.current_n < batch.N) {
+                machine.state = WORKING;
+                machine.p = batch.P0;
+                simulation.current_n++;
+            }
+            break;
+    }
+}
+
