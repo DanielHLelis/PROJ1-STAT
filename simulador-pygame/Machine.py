@@ -119,7 +119,7 @@ class Machine(Square):
                 self.max_tr = self.max_tr
                 self.color = RED
             else:
-                self.p += self.beta
+                self.p += self.beta * delta_time
         elif 'BROKEN' == self.state:
             self.max_tr -= delta_time
             if 0 >= self.max_tr:

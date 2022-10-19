@@ -9,7 +9,7 @@ class Manager:
     
     def __init__ (self, sections, config) -> None:
         self.sections = dict(sections)
-        self.min_fine_machines = config['n']
+        self.n = config['n']
         self.collapsed = False
         self.started = False
     
@@ -24,20 +24,25 @@ class Manager:
     # Mesma coisa que a função a cima, não pergunte, minha cabeça funciona assim. 
     def insert (self, machine):
         self.organize(machine)
+        
+    # QUANTIDADE DE MAQUINAS VALIDAS    
+    @property
+    def valid_machines (self):
+        return (
+            + self.sections['FINE'].num_machines
+            + self.sections['AVAILABLE'].num_machines
+        )
             
     # ATUALIZA TODAS AS SEÇÕES
     def update (self, delta_time):
         for section in self.sections.values():
             section.update(self, delta_time)
             
-        if self.min_fine_machines == self.sections['FINE'].num_machines + self.sections['AVAILABLE'].num_machines:
-            if self.started:
-                self.collapsed = True
+        if self.valid_machines < self.n:
+            self.collapsed = True
             return self
-        else:
-            self.started = True
         
-        if self.min_fine_machines  >= self.sections['FINE'].num_machines:
+        if self.sections['FINE'].num_machines < self.n:
             machine = self.sections['AVAILABLE'].extract_machine()
             
             if None != machine:
