@@ -11,6 +11,7 @@ class Manager:
         self.sections = dict(sections)
         self.min_fine_machines = config['n']
         self.collapsed = False
+        self.started = False
     
     # INSERE UMA MÁQUINA NA SEÇÃO CORRETA
     def organize (self, machine):
@@ -29,9 +30,12 @@ class Manager:
         for section in self.sections.values():
             section.update(self, delta_time)
             
-        if 0 == self.sections['FINE'].num_machines - self.sections['AVAILABLE'].num_machines:
-            self.collapsed = True
+        if self.min_fine_machines == self.sections['FINE'].num_machines + self.sections['AVAILABLE'].num_machines:
+            if self.started:
+                self.collapsed = True
             return self
+        else:
+            self.started = True
         
         if self.min_fine_machines  >= self.sections['FINE'].num_machines:
             machine = self.sections['AVAILABLE'].extract_machine()
