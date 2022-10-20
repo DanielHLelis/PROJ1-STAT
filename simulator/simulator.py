@@ -98,13 +98,25 @@ def factory_trial(*args, **kwargs):
         simulator = FactorySimulator(*args[0])
     else:
         simulator = FactorySimulator(*args, **kwargs)
+
     n = 0
+    z = 0
     while True:
         st = simulator.next_state()
-        n += 1
+
+        availability = 0 if simulator.s0 == 0 else len(
+            simulator._idle) / simulator.s0
+        if z == 0 and availability < 0.2:
+            z = simulator._clock
+
         if st['critical']:
+            n = simulator._clock
             break
-    return n
+
+    if z == 0:
+        z = n
+
+    return (n, z)
 
 
 def multiple_trials(trial_count: int, n: int, p0: float, s0: int, tr: int, beta: float, seed: int, parallel: bool = True, parallel_threshold: int = 10000):
@@ -129,7 +141,8 @@ def multiple_trials(trial_count: int, n: int, p0: float, s0: int, tr: int, beta:
             'beta': beta,
             'seed': seed
         },
-        'results': results
+        'results': [r[0] for r in results],
+        'results_z': [r[1] for r in results]
     }
 
     return data

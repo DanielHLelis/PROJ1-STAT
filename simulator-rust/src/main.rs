@@ -15,7 +15,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 // Max cycles per simulation
-const MAX_CYCLES: i64 = 10000;
+const MAX_CYCLES: i64 = 100000;
 
 // Machine State Data
 #[derive(Copy, Clone)]
@@ -124,17 +124,33 @@ impl SimulationState {
         return self.running < self.configs.n;
     }
 
-    fn run_trial(configs: SimulationConfigs) -> i64 {
+    fn run_trial(configs: SimulationConfigs) -> (i64, i64) {
         let mut state: SimulationState = SimulationState::new(configs);
 
+        let mut z: i64 = 0;
         while !state.next() {
             if state.clock >= MAX_CYCLES {
                 println!("Exceeded max cycles");
                 break;
             }
+
+            // Compute Z
+            let availability: f64 = if state.configs.s0 != 0 {
+                (state.idle.len() as f64) / (state.configs.s0 as f64)
+            } else {
+                0.0
+            };
+
+            if z == 0 && availability < 0.2 {
+                z = state.clock;
+            }
         }
 
-        return state.clock;
+        if z == 0 {
+            z = state.clock;
+        }
+
+        return (state.clock, z);
     }
 }
 
@@ -144,6 +160,7 @@ struct Results {
     trial_count: i64,
     configs: SimulationConfigs,
     results: Vec<i64>,
+    results_z: Vec<i64>,
 }
 
 fn main() {
@@ -198,7 +215,11 @@ fn main() {
         trial_count,
         configs,
         results: Vec::with_capacity(trial_count as usize),
+        results_z: Vec::with_capacity(trial_count as usize),
     };
+
+    // Temporary Vector to store simulation results
+    let mut tmp_results: Vec<(i64, i64)> = Vec::with_capacity(trial_count as usize);
 
     // Parallel Trials
     let seeds: Vec<u64> = (0..trial_count)
@@ -212,7 +233,13 @@ fn main() {
 
             return SimulationState::run_trial(current_config);
         })
-        .collect_into_vec(&mut results.results);
+        .collect_into_vec(&mut tmp_results);
+
+    // Fill results
+    for (r, z) in tmp_results.iter() {
+        results.results.push(*r);
+        results.results_z.push(*z);
+    }
 
     // Try creating dir, ignore any errors
     let _ = fs::create_dir_all("results");
