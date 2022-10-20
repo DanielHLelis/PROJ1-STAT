@@ -82,7 +82,7 @@ impl SimulationState {
     }
 
     fn p(configs: SimulationConfigs, clock: i64, machine: &MachineState) -> f64 {
-        (configs.p0 + configs.beta * (machine.run_begin as f64 - clock as f64)).min(1.0)
+        (configs.p0 + configs.beta * (clock as f64 - machine.run_begin as f64)).min(1.0)
     }
 
     pub fn next(&mut self) -> bool {
