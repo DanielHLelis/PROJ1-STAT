@@ -1,9 +1,4 @@
-import imp
-
-
 import sys
-
-from distutils.command.config import config
 from SimContext import SimContext
 
 
