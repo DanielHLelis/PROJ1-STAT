@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import random
 import collections
 import sys
@@ -174,7 +176,4 @@ if __name__ == '__main__':
     except Exception as _:
         pass
 
-    file_name = f'results/{trial_count}-{n}-{escape(p0)}-{s0}-{tr}-{escape(beta)}-{seed}.json'
-
-    with open(file_name, 'w') as f:
-        json.dump(data, f)
+    print(json.dumps(data))

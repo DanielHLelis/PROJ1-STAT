@@ -244,7 +244,5 @@ fn main() {
     // Try creating dir, ignore any errors
     let _ = fs::create_dir_all("results");
     // Write final JSON
-    let output_path =
-        format!("results/{}-{}-{}-{}-{}-{}", n, p0, s, tr, beta, seed).replace('.', "_") + ".json";
-    fs::write(output_path, serde_json::to_string(&results).unwrap()).unwrap();
+    println!("{}", serde_json::to_string(&results).unwrap());
 }
