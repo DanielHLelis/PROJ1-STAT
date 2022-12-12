@@ -2,6 +2,15 @@ import scipy.stats as st
 import numpy as np
 from scipy.stats._discrete_distns import nbinom_gen
 
+from typing import List, Union
+
+
+def _try_get(it: Union[List[Union[int, float]], int, float], idx:int):
+    if hasattr(it, '__len__'):
+        if idx < len(it):
+            return it[idx]
+        return it[0]
+    return it
 
 class tnbinom_gen(st.rv_discrete):
     """
@@ -12,7 +21,7 @@ class tnbinom_gen(st.rv_discrete):
         # Handle iterable
         if hasattr(k, '__iter__'):
             if len(k) != 1:
-                return [self._pmf(j, n[i], s0[i], p[i]) for i, j in enumerate(k)]
+                return [self._pmf(j, _try_get(n, i), _try_get(s0, i), _try_get(p, i)) for i, j in enumerate(k)]
             else:
                 k = k[0]
                 n = n[0]
@@ -27,7 +36,7 @@ class tnbinom_gen(st.rv_discrete):
         # Handle iterable
         if hasattr(k, '__iter__'):
             if len(k) != 1:
-                return [self._cdf(j, n[i], s0[i], p[i]) for i, j in enumerate(k)]
+                return [self._cdf(j, _try_get(n, i), _try_get(s0, i), _try_get(p, i)) for i, j in enumerate(k)]
             else:
                 k = k[0]
                 n = n[0]
@@ -41,7 +50,7 @@ class tnbinom_gen(st.rv_discrete):
     def _stats(self, n, s0, p):
         if hasattr(n, '__iter__'):
             if len(n) != 1:
-                return [self._stats(j, s0[i], p[i]) for i, j in enumerate(n)]
+                return [self._stats(j, _try_get(s0, i), _try_get(p, i)) for i, j in enumerate(n)]
             else:
                 n = n[0]
                 s0 = s0[0]

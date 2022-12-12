@@ -78,7 +78,7 @@ def load_or_generate_simulation(
     # Generate new dataset (if necessary)
     if force_recreation or not os.path.isfile(file_path):
         os.system(
-            f'{simulator_cmd} {trial_count} {n} {p0} {s} {tr} {beta} > {file_path}')
+            f'{simulator_cmd} {trial_count} {n} {p0} {s} {tr} {beta} > {file_path} 2> /dev/null')
 
     # Load and return simulation results
     return load_simulation_json(file_path)
