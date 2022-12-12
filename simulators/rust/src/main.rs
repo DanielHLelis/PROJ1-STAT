@@ -15,7 +15,7 @@ use rayon::prelude::*;
 use serde::Serialize;
 
 // Max cycles per simulation
-const MAX_CYCLES: i64 = 100000;
+const MAX_CYCLES: i64 = 50000;
 
 // Machine State Data
 #[derive(Copy, Clone)]
@@ -130,7 +130,7 @@ impl SimulationState {
         let mut z: i64 = 0;
         while !state.next() {
             if state.clock >= MAX_CYCLES {
-                println!("Exceeded max cycles");
+                eprintln!("Exceeded max cycles");
                 break;
             }
 

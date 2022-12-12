@@ -48,6 +48,10 @@ def load_simulation_json(path: str) -> Union[SimulationResultsType, None]:
     try:
         with open(path, 'r') as f:
             data = json.load(f)
+
+            data['results_delta'] = [r - z for r,
+                                     z in zip(data['results'], data['results_z'])]
+
             return data
     except Exception:
         return None
@@ -82,11 +86,12 @@ def load_or_generate_simulation(
 
 def build_pmf(
     data: SimulationResultsType,
+    field: str = 'results'
 ) -> Tuple[List[int], List[float]]:
     counts = defaultdict(lambda: 0)
-    tot = len(data['results'])
+    tot = len(data[field])
 
-    for el in data['results']:
+    for el in data[field]:
         counts[el] += 1
 
     xs = list(range(min(counts.keys()), max(counts.keys()) + 1))
