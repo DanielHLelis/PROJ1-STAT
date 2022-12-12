@@ -1,6 +1,6 @@
+use pyo3::prelude::*;
+
 use std::collections::LinkedList;
-use std::env;
-use std::process;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 extern crate rand;
@@ -127,7 +127,6 @@ impl SimulationState {
         let mut z: i64 = 0;
         while !state.next() {
             if configs.max_cycles > 0 && state.clock >= configs.max_cycles {
-                eprintln!("Exceeded max cycles");
                 break;
             }
 
@@ -160,58 +159,19 @@ struct Results {
     results_z: Vec<i64>,
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    // Validate program args
-    if args.len() < 6 {
-        println!("{{trial_count}} {{n}} {{p0}} {{s0}} {{tr}} are required");
-        process::exit(1);
-    }
-
-    // N trials to compute
-    let trial_count: i64 = args[1].parse().unwrap();
-
-    // Params
-    let n: i64 = args[2].parse().unwrap();
-    let p0: f64 = args[3].parse().unwrap();
-    let s: i64 = args[4].parse().unwrap();
-    let tr: i64 = args[5].parse().unwrap();
-
-    // Beta Value
-    let beta: f64 = if args.len() >= 7 {
-        args[6].parse().unwrap()
-    } else {
-        0.0
-    };
-
+fn simulate_raw(trial_count: i64, configs: SimulationConfigs) -> String {
     // RNG Seeder
-    let seed: u64 = if args.len() >= 8 {
-        args[7].parse().unwrap()
-    } else {
+    let seed: u64 = if configs.seed == 0 {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64
+    } else {
+        configs.seed
     };
+
     // Seed RNG
     let mut seed_generator = rand_pcg::Pcg64::seed_from_u64(seed);
-
-    let max_cycles: i64 = match env::var("SIM_MAX_CYCLES") {
-        Ok(v) => v.parse::<i64>().unwrap_or(100000),
-        Err(..) => 100000,
-    };
-
-    // Base configs
-    let configs = SimulationConfigs {
-        n,
-        p0,
-        s0: s,
-        tr,
-        beta,
-        seed,
-        max_cycles,
-    };
 
     // Result Struct
     let mut results = Results {
@@ -245,5 +205,36 @@ fn main() {
     }
 
     // Write final JSON
-    println!("{}", serde_json::to_string(&results).unwrap());
+    return serde_json::to_string(&results).unwrap();
+}
+
+#[pyfunction]
+fn simulate(
+    trial_count: i64,
+    n: i64,
+    p0: f64,
+    s0: i64,
+    tr: i64,
+    beta: f64,
+    seed: u64,
+    max_cycles: i64,
+) -> PyResult<String> {
+    Ok(simulate_raw(
+        trial_count,
+        SimulationConfigs {
+            n,
+            p0,
+            s0,
+            tr,
+            beta,
+            seed,
+            max_cycles,
+        },
+    ))
+}
+
+#[pymodule]
+fn rustysimulator(_py: Python, m: &PyModule) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(simulate, m)?)?;
+    Ok(())
 }

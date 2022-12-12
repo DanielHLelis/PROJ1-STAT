@@ -66,6 +66,7 @@ def load_or_generate_simulation(
     beta: float = 0.0,
     salt: str = 'default',
     force_recreation: bool = False,
+    max_cycles: int = 50000,
     datasets_path=consts.AUTO_GENERATED_DATASETS_DIR,
     simulator_cmd=consts.SIMULATOR_EXECUTABLE_PATH,
 ) -> Union[SimulationResultsType, None]:
@@ -78,7 +79,7 @@ def load_or_generate_simulation(
     # Generate new dataset (if necessary)
     if force_recreation or not os.path.isfile(file_path):
         os.system(
-            f'{simulator_cmd} {trial_count} {n} {p0} {s} {tr} {beta} > {file_path} 2> /dev/null')
+            f'SIM_MAX_CYCLES={int(max_cycles)} {simulator_cmd} {trial_count} {n} {p0} {s} {tr} {beta} > {file_path} 2> /dev/null')
 
     # Load and return simulation results
     return load_simulation_json(file_path)
