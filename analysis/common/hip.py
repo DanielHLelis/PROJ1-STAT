@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 
 import numpy as np
 import scipy.stats as st
@@ -51,12 +52,36 @@ class Sim(dict):
         sim['mean'] = np.mean(sim['results_np'])
         sim['std'] = np.std(sim['results_np'], ddof=1)
         sim['normalized'] = (sim['results_np'] - sim['mean']) / (sim['std'])
+        
+        width = 2
+        sim['bar_freq'] = [sum(sim['freq'][i: i + width]) for i in range(0, sim['trial_count'], width)]
+        sim['bar_pmf'] = [sum(sim['pmf'][i: i + width]) for i in range(0, sim['trial_count'], width)]
+
+        sim['bar_x'] = sim['sorted']
+        sim['bar_y'] = sim['pmf']
 
         return sim
 
+
+    def condense_freq (self, depth : int = 1):
+        N = 2 ** depth
+
+        self['bar_x'] = [x[0] for x in [self['sorted'][i:i + N] for i in range(0, len(self['sorted']), N)]]
+        self['bar_y'] = [sum(x) for x in [self['pmf'][i:i + N] for i in range(0, len(self['pmf']), N)]]
+
+        return copy.deepcopy((self['bar_x'], self['bar_y']))
+
+        
     # Agrupa frequências
     def group_freq(self, width: int = 5) -> list:
-        return [sum(self['freq'][i: i + width]) for i in range(0, self['trial_count'], width)]
+        bar_freq = [sum(self['freq'][i: i + width]) for i in range(0, self['trial_count'], width)]
+        bar_pmf = [sum(self['pmf'][i: i + width]) for i in range(0, self['trial_count'], width)]
+
+        self['bar_freq'] = bar_freq
+        self['bar_pmf'] = bar_pmf
+ 
+        return bar_freq
+
 
     # Distribui as frequências para atingir uma frequencia mínima não nula
     def distribute_freq(self, min_freq=5):
