@@ -100,7 +100,7 @@ def load_or_generate_simulation(
     return load_simulation_json(file_path)
 
 
-def sim_s_search(n: int, p: float, tr: int, beta: float, starting_s: int = 0, ending_s: int = 100, quantile: float = 0.01, target: int = 10000, trials: int = 1000, verbose: bool = False, **kwargs) -> Tuple[int, SimulationResultsType]:
+def sim_s_search(n: int, p: float, tr: int, beta: float, starting_s: int = 0, ending_s: int = 100, quantile: float = 0.01, target: int = 10000, trials: int = 1000, verbose: bool = False, max_cycles: Union[int, None] = None, **kwargs) -> Tuple[int, SimulationResultsType]:
     simulations = {}
     cur_simulation = None
 
@@ -110,13 +110,14 @@ def sim_s_search(n: int, p: float, tr: int, beta: float, starting_s: int = 0, en
     while s_low < s_high:
         cur_s = (s_high + s_low) // 2
         if verbose:
-            print(f"Trying {cur_s}")
+            print(f"Trying s={cur_s}")
+
         cur_simulation = load_or_generate_simulation(
-            trials, n, p, cur_s, tr, beta, max_cycles=target * 2, **kwargs)
+            trials, n, p, cur_s, tr, beta, max_cycles=max_cycles or target * 2, **kwargs)
         simulations[cur_s] = cur_simulation
         quantile_val = np.quantile(cur_simulation['results'], quantile)
         if verbose:
-            print(f"{cur_s} quantile: {quantile_val}")
+            print(f"s={cur_s} {quantile}-quantile: {quantile_val}")
 
         if quantile_val < target:
             s_low = cur_s + 1
@@ -140,3 +141,11 @@ def build_pmf(
     ys = [counts[x] / tot for x in xs]
 
     return xs, ys
+
+
+def normalized_results(simulation: SimulationResultsType, field: str = 'results') -> List[float]:
+    data = simulation[field]
+    sorted_data = np.sort(data)
+    mean, std = sorted_data.mean(), sorted_data.std(ddof=1)
+    normalized_data = (sorted_data - mean) / std
+    return normalized_data

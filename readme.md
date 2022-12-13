@@ -9,3 +9,5 @@ A versão no GitHub provavelmente irá se encontrar mais atualizada.
 ## Notebook
 
 O notebook principal está em `analysis/base.ipynb`.
+
+Demais instruções de execução se encontram no notebook.
